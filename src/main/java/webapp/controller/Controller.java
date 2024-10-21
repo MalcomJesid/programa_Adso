@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 @WebServlet("/controller")
@@ -57,7 +58,7 @@ public class Controller extends HttpServlet {
         Cliente cliente = new ClienteDaoJDBC().encontrar(new Cliente(idCliente));
         request.setAttribute("cliente", cliente);
 
-        String jspEditar = "/WEB-INF/paginas/cliente/editarCliente.jsp";
+        String jspEditar = "/WEB-INF/paginas/clientes/editarCliente.jsp";
         request.getRequestDispatcher(jspEditar).forward(request, response);
     }
 
@@ -84,31 +85,6 @@ public class Controller extends HttpServlet {
     private void insertarCliente(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String nombre = request.getParameter("nombre");
         String apellido = request.getParameter("apellido");
-        String email = request.getParameter("email");
-        String telefono = request.getParameter("telefono");
-        double saldo = 0;
-
-        try {
-            String saldoString = request.getParameter("saldo");
-            if (saldoString != null && !"".equals(saldoString)) {
-                saldo = Double.parseDouble(saldoString);
-            }
-
-            Cliente cliente = new Cliente(nombre, apellido, email, telefono, saldo);
-            int registrosModificados = new ClienteDaoJDBC().insertar(cliente);
-            System.out.println("registrosModificados = " + registrosModificados);
-
-            this.accionDefault(request, response);
-        } catch (NumberFormatException e) {
-            request.setAttribute("error", "Saldo debe ser un número válido.");
-            request.getRequestDispatcher("clientes.jsp").forward(request, response);
-        }
-    }
-
-    private void modificarCliente(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int idCliente = Integer.parseInt(request.getParameter("idcliente"));
-        String nombre = request.getParameter("nombre");
-        String apellido = request.getParameter("apellido");
         String correo = request.getParameter("correo");
         String telefono = request.getParameter("telefono");
         double saldo = 0;
@@ -119,8 +95,8 @@ public class Controller extends HttpServlet {
                 saldo = Double.parseDouble(saldoString);
             }
 
-            Cliente cliente = new Cliente(idCliente, nombre, apellido, correo, telefono, saldo);
-            int registrosModificados = new ClienteDaoJDBC().actualizar(cliente);
+            Cliente cliente = new Cliente(nombre, apellido, correo, telefono, saldo);
+            int registrosModificados = new ClienteDaoJDBC().insertar(cliente);
             System.out.println("registrosModificados = " + registrosModificados);
 
             this.accionDefault(request, response);
@@ -129,6 +105,71 @@ public class Controller extends HttpServlet {
             request.getRequestDispatcher("clientes.jsp").forward(request, response);
         }
     }
+
+    private void modificarCliente(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Recuperar el ID del cliente desde el formulario
+        String idClienteStr = request.getParameter("idCliente");
+        int idCliente = 0;
+
+        // Validar el ID del cliente
+        if (idClienteStr != null && !idClienteStr.isEmpty()) {
+            try {
+                idCliente = Integer.parseInt(idClienteStr);
+            } catch (NumberFormatException e) {
+                System.out.println("Error: idCliente no es un número válido.");
+                response.sendRedirect("error.jsp"); // Redirigir a una página de error
+                return;
+            }
+        } else {
+            System.out.println("Error: idCliente es nulo o vacío.");
+            response.sendRedirect("error.jsp");
+            return;
+        }
+
+        // Recuperar otros valores del formulario
+        String nombre = request.getParameter("nombre");
+        String apellido = request.getParameter("apellido");
+        String correo = request.getParameter("correo");
+        String telefono = request.getParameter("telefono");
+        double saldo = 0;
+
+        // Validar y convertir el saldo
+        String saldoStr = request.getParameter("saldo");
+        if (saldoStr != null && !saldoStr.isEmpty()) {
+            try {
+                saldo = Double.parseDouble(saldoStr);
+            } catch (NumberFormatException e) {
+                System.out.println("Error: saldo no es un número válido.");
+                response.sendRedirect("error.jsp"); // Redirigir a una página de error
+                return;
+            }
+        }
+
+        // Crear el objeto Cliente con los datos del formulario
+        Cliente cliente = new Cliente(idCliente, nombre, apellido, telefono, correo, saldo);
+
+        // Intentar actualizar el cliente en la base de datos
+        try {
+            int registrosModificados = new ClienteDaoJDBC().actualizar(cliente);
+            System.out.println("Registros modificados = " + registrosModificados);
+
+            if (registrosModificados > 0) {
+                // Redirigir a la acción por defecto después de una modificación exitosa
+                this.accionDefault(request, response);
+            } else {
+                System.out.println("No se encontró el cliente para modificar.");
+                response.sendRedirect("error.jsp"); // Redirigir a una página de error si no se encontró el cliente
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al modificar el cliente: " + e.getMessage());
+            response.sendRedirect("error.jsp"); // Redirigir a una página de error
+        }
+    }
+
+
+
+
 
     private void eliminarCliente(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int idCliente = Integer.parseInt(request.getParameter("idcliente"));

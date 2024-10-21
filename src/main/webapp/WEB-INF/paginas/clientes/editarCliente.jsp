@@ -13,45 +13,40 @@
 <jsp:include page="/WEB-INF/paginas/comunes/cabecero.jsp"/>
 <jsp:include page="/WEB-INF/paginas/comunes/botonesNavegacionEdicion.jsp"/>
 
-<form action="${pageContext.request.contextPath}/controller?accion=modificar&idcliente=${cliente.idcliente}" method="POST" class="was-validated">
-  <!--Botones de Navegacion -->
-  <section id="details">
-    <div class="container">
-      <div class="row">
-        <div class="col">
-          <div class="card">
-            <div class="card-header">
-              <h4>Editar Cliente</h4>
-            </div>
-            <div class="card-body">
-              <div class="form-group">
-                <label for="nombre">Nombre</label>
-                <input type="text" class="form-control" name="nombre" required value="${cliente.nombre}">
-              </div>
-              <div class="form-group">
-                <label for="apellido">Apellido</label>
-                <input type="text" class="form-control" name="apellido" required value="${cliente.apellido}">
-              </div>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" name="email" required value="${cliente.email}">
-              </div>
-              <div class="form-group">
-                <label for="telefono">Teléfono</label>
-                <input type="tel" class="form-control" name="telefono" required value="${cliente.telefono}">
-              </div>
-              <div class="form-group">
-                <label for="saldo">Saldo</label>
-                <input type="number" class="form-control" name="saldo" required value="${cliente.saldo}" step="any">
-              </div>
-              <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            </div>
-          </div>
-        </div>
-      </div>
+<form action="${pageContext.request.contextPath}/controller?accion=modificar" method="POST" class="was-validated">
+  <input type="hidden" name="idCliente" value="${cliente.idcliente}"> <!-- Campo oculto para el ID del cliente -->
+
+  <div class="modal-body">
+    <div class="form-group">
+      <label for="nombre">Nombre</label>
+      <input type="text" class="form-control" name="nombre" value="${cliente.nombre}" required>
     </div>
-  </section>
+    <div class="form-group">
+      <label for="apellido">Apellido</label>
+      <input type="text" class="form-control" name="apellido" value="${cliente.apellido}" required>
+    </div>
+    <div class="form-group">
+      <label for="correo">Correo</label>
+      <input type="email" class="form-control" name="correo" value="${cliente.correo}" required>
+    </div>
+    <div class="form-group">
+      <label for="telefono">Teléfono</label>
+      <input type="tel" class="form-control" name="telefono" value="${cliente.telefono}" required>
+    </div>
+    <div class="form-group">
+      <label for="saldo">Saldo</label>
+      <input type="number" class="form-control" name="saldo" value="${cliente.saldo}" required step="any">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+  </div>
 </form>
+
+
+
+
 
 <!--Pie de Pagina-->
 <jsp:include page="/WEB-INF/paginas/comunes/piePagina.jsp"/>

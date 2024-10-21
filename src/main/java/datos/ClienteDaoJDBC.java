@@ -18,17 +18,13 @@ public class ClienteDaoJDBC {
     private static final String SQL_DELETE = "DELETE FROM cliente WHERE idcliente=?";
 
     // Método para listar todos los clientes
-    public List<Cliente> Listar(){
-        Connection conn = null;
-        PreparedStatement stat = null;
-        ResultSet rs = null;
-        Cliente cliente = null;
+    public List<Cliente> Listar() {
         List<Cliente> clientes = new ArrayList<>();
 
-        try {
-            conn = Conexion.getConnection();
-            stat = conn.prepareStatement(SQL_SELECT);
-            rs = stat.executeQuery();
+        // Usar try-with-resources para manejar la conexión, el statement y el ResultSet
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stat = conn.prepareStatement(SQL_SELECT);
+             ResultSet rs = stat.executeQuery()) {
 
             while (rs.next()) {
                 int idcliente = rs.getInt("idcliente");
@@ -38,50 +34,41 @@ public class ClienteDaoJDBC {
                 String telefono = rs.getString("telefono");
                 double saldo = rs.getDouble("saldo");
 
-                cliente = new Cliente(idcliente, nombre, apellido, correo, telefono, saldo);
+                Cliente cliente = new Cliente(idcliente, nombre, apellido, correo, telefono, saldo);
                 clientes.add(cliente);
             }
 
         } catch (SQLException ex) {
             ex.printStackTrace(System.out);
-        } finally {
-            Conexion.close(rs);
-            Conexion.close(stat);
-            Conexion.close(conn);
         }
+
         return clientes;
     }
 
     // Método para encontrar un cliente por su ID
     public Cliente encontrar(Cliente cliente) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
         Cliente clienteEncontrado = null;
 
-        try {
-            conn = Conexion.getConnection();
-            stmt = conn.prepareStatement(SQL_SELECT_BY_ID);
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BY_ID, ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
+
             stmt.setInt(1, cliente.getIdcliente());
-            rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                int idCliente = rs.getInt("idcliente");
-                String nombre = rs.getString("nombre");
-                String apellido = rs.getString("apellido");
-                String correo = rs.getString("correo");
-                String telefono = rs.getString("telefono");
-                double saldo = rs.getDouble("saldo");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int idCliente = rs.getInt("idcliente");
+                    String nombre = rs.getString("nombre");
+                    String apellido = rs.getString("apellido");
+                    String correo = rs.getString("correo");
+                    String telefono = rs.getString("telefono");
+                    double saldo = rs.getDouble("saldo");
 
-                clienteEncontrado = new Cliente(idCliente, nombre, apellido, correo, telefono, saldo);
+                    clienteEncontrado = new Cliente(idCliente, nombre, apellido, correo, telefono, saldo);
+                }
             }
 
         } catch (SQLException ex) {
             ex.printStackTrace();
-        } finally {
-            Conexion.close(rs);
-            Conexion.close(stmt);
-            Conexion.close(conn);
         }
 
         return clienteEncontrado;
@@ -89,14 +76,11 @@ public class ClienteDaoJDBC {
 
     // Método para insertar un nuevo cliente
     public int insertar(Cliente cliente) {
-        String sql = "INSERT INTO clientes (nombre, apellido, email, telefono, saldo) VALUES (?, ?, ?, ?, ?)";
         int registrosModificados = 0;
-        Connection conn = null;
-        PreparedStatement stmt = null;
 
-        try {
-            conn = Conexion.getConnection();
-            stmt = conn.prepareStatement(sql);
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_INSERT)) {
+
             stmt.setString(1, cliente.getNombre());
             stmt.setString(2, cliente.getApellido());
             stmt.setString(3, cliente.getCorreo());
@@ -106,63 +90,41 @@ public class ClienteDaoJDBC {
             registrosModificados = stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace(); // Captura y muestra el error
-        } finally {
-            Conexion.close(stmt);
-            Conexion.close(conn); // Cierra la conexión
         }
 
         return registrosModificados;
     }
 
-
     // Método para actualizar un cliente existente
-    public int actualizar(Cliente cliente) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        int registros = 0;
-
-        try {
-            conn = Conexion.getConnection();
-            stmt = conn.prepareStatement(SQL_UPDATE);
+    public int actualizar(Cliente cliente) throws SQLException {
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE)) {
             stmt.setString(1, cliente.getNombre());
             stmt.setString(2, cliente.getApellido());
-            stmt.setString(3, cliente.getCorreo());
-            stmt.setString(4, cliente.getTelefono());
+            stmt.setString(3, cliente.getTelefono());
+            stmt.setString(4, cliente.getCorreo());
             stmt.setDouble(5, cliente.getSaldo());
             stmt.setInt(6, cliente.getIdcliente());
-
-            registros = stmt.executeUpdate();
-
-        } catch (SQLException ex) {
-            ex.printStackTrace(System.out);
-        } finally {
-            Conexion.close(stmt);
-            Conexion.close(conn);
+            return stmt.executeUpdate();
         }
-        return registros;
     }
+
+
 
     // Método para eliminar un cliente
     public int eliminar(Cliente cliente) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
         int registros = 0;
 
-        try {
-            conn = Conexion.getConnection();
-            stmt = conn.prepareStatement(SQL_DELETE);
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL_DELETE)) {
+
             stmt.setInt(1, cliente.getIdcliente());
 
             registros = stmt.executeUpdate();
-
         } catch (SQLException ex) {
             ex.printStackTrace(System.out);
-        } finally {
-            Conexion.close(stmt);
-            Conexion.close(conn);
         }
+
         return registros;
     }
 }
-
-
